@@ -1,0 +1,22 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    # defaults file for ansible-role-yay
+    ansible_arch_yay:
+      # The yay git source repository
+      git: "https://aur.archlinux.org/yay.git"
+      # The owner of the repository
+      owner:
+        name: "vagrant"
+        group: "vagrant"
+
+      # Destination to clone yay to
+      dest: "/home/vagrant/yay"
+
+    yay_role_apps:
+
+  tasks:
+    - name: "Include role ansible-role-yay"
+      include_role:
+        name: ansible-role-yay

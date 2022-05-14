@@ -1,0 +1,63 @@
+---
+- name: Define if yay is installed
+  stat:
+    path: /usr/bin/yay
+  register: yay_state
+
+- name: Install git
+  community.general.pacman:
+    name: git
+    state: present
+  become: true
+  become_user: root
+  when: not yay_state.stat.exists
+
+- name: Clone yay AUR helper source git repository to "{{ ansible_arch_yay.dest }}"
+  git:
+    repo: "{{ ansible_arch_yay.git }}"
+    dest: "{{ ansible_arch_yay.dest }}"
+    force: true
+  become: yes
+  when: not yay_state.stat.exists
+
+- name: "Set access rights to {{ ansible_arch_yay.owner.name }}:{{ ansible_arch_yay.owner.group }}"
+  file:
+    path: "{{ ansible_arch_yay.dest }}"
+    state: directory
+    mode: 0700
+    owner: "{{ ansible_arch_yay.owner.name }}"
+    group: "{{ ansible_arch_yay.owner.group }}"
+    recurse: true
+  become: yes
+  when: not yay_state.stat.exists
+
+# install base-devel
+- name: Install base-devel
+  community.general.pacman:
+    name: base-devel
+    state: present
+  become: yes
+  when: not yay_state.stat.exists
+
+- name: "MAKEPKG yay AUR helper as {{ ansible_arch_yay.owner }}"
+  shell: "makepkg -si --noconfirm > ./makepkg-yay.log"
+  become: yes
+  become_user: "{{ ansible_arch_yay.owner.name }}"
+  when: not yay_state.stat.exists
+  args:
+    chdir: "{{ ansible_arch_yay.dest }}"
+
+- name: Recursively remove {{ ansible_arch_yay.dest }}
+  file:
+    path: "{{ ansible_arch_yay.dest }}"
+    state: absent
+  become: yes
+
+- name: Install packages
+  yay:
+    name: "{{ yay_role_apps_loop }}"
+  with_items: "{{ yay_role_apps }}"
+  loop_control:
+    loop_var: yay_role_apps_loop
+  when: yay_role_apps is defined
+  become: yes

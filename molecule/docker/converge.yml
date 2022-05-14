@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  become_user: root
+  vars:
+    ansible_arch_yay:
+      # The yay git source repository
+      git: "https://aur.archlinux.org/yay.git"
+      # The owner of the repository
+      # Destination to clone yay to
+      dest: "/tmp/yay"
+      become_user: "vagrant"
+
+    colored_output: true
+
+  tasks:
+    - name: "Include role ansible-role-yay"
+      include_role:
+        name: ansible-role-yay
